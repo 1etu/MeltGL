@@ -18,6 +18,9 @@ That last part is the whole point. A warp can only push pixels around inside the
 the silhouette never changes and nothing ever really drips. Here the silhouette is what the solver is
 solving for, which is why drops swell, neck, and let go on their own.
 
+There is a live demo at [1etu.github.io/MeltGL](https://1etu.github.io/MeltGL/). Drop a picture or a video
+of your own on the box and pull the sliders around.
+
 ## The melt
 
 Eight seconds of the slime preset, recorded from the demo page at 20 frames per second. There is also an
