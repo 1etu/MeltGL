@@ -1,0 +1,5 @@
+packages:
+  - 'Applications/*'
+  - 'Packages/*'
+  - 'Tests/*'
+  - 'Tools/*'

@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@meltgl/common": ["Packages/Common/src/index.ts"],
+      "@meltgl/geometry": ["Packages/Geometry/src/index.ts"],
+      "@meltgl/animation-clock": ["Packages/AnimationClock/src/index.ts"],
+      "@meltgl/noise-generator": ["Packages/NoiseGenerator/src/index.ts"],
+      "@meltgl/render-surface": ["Packages/RenderSurface/src/index.ts"],
+      "@meltgl/render-pipeline": ["Packages/RenderPipeline/src/index.ts"],
+      "@meltgl/displacement-engine": ["Packages/DisplacementEngine/src/index.ts"],
+      "@meltgl/filter-system": ["Packages/FilterSystem/src/index.ts"],
+      "@meltgl/transition-controller": ["Packages/TransitionController/src/index.ts"],
+      "@meltgl/source-graphics": ["Packages/SourceGraphics/src/index.ts"],
+      "@meltgl/element-host": ["Packages/ElementHost/src/index.ts"],
+      "meltgl": ["Packages/MeltGL/src/index.ts"]
+    }
+  },
+  "include": [
+    "Packages/*/src/**/*.ts",
+    "Applications/*/src/**/*.ts",
+    "Tests/*/src/**/*.ts",
+    "Tools/*/src/**/*.ts"
+  ]
+}

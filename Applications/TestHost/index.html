@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meltgl test host</title>
+<style>
+body {
+  font: 12px/1.5 Helvetica, Arial, sans-serif;
+  color: #000;
+  background: #fff;
+  margin: 0;
+  padding: 16px;
+}
+#room {
+  margin-bottom: 270px;
+}
+#stage {
+  width: 360px;
+  height: 360px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%),
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+  border: 1px solid #ccc;
+}
+table.controls {
+  border-collapse: collapse;
+}
+table.controls td {
+  padding: 2px 8px 2px 0;
+  vertical-align: middle;
+}
+input[type=range] {
+  width: 220px;
+  vertical-align: middle;
+}
+select, button, input[type=file] {
+  font: 12px Helvetica, Arial, sans-serif;
+}
+#status {
+  font-family: "Courier New", Courier, monospace;
+  color: #555;
+  white-space: pre;
+}
+</style>
+</head>
+<body>
+
+<img id="teapot" src="/teapot.png" alt="" hidden>
+
+<div id="room">
+  <div id="stage"></div>
+</div>
+
+<table class="controls">
+  <tr>
+    <td>source</td>
+    <td><button id="teapotButton">Teapot</button> <input type="file" id="file" accept="image/*,video/*"></td>
+  </tr>
+  <tr>
+    <td>backend</td>
+    <td>
+      <select id="backend">
+        <option value="auto" selected>auto</option>
+        <option value="webgl2">webgl2</option>
+        <option value="svg">svg</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <td>material</td>
+    <td><select id="material"></select></td>
+  </tr>
+  <tr>
+    <td>progress</td>
+    <td><input type="range" id="progress" min="0" max="1000" value="0"></td>
+  </tr>
+  <tr>
+    <td>ground</td>
+    <td><label><input type="checkbox" id="ground" checked> floor</label></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td><button id="play">Melt</button> <button id="reverse">Reverse</button> <button id="reset">Reset</button></td>
+  </tr>
+</table>
+
+<p id="status"></p>
+
+<script type="module" src="/src/main.ts"></script>
+
+</body>
+</html>

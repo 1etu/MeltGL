@@ -1,0 +1,13 @@
+export { MeltGL, createMelt } from './melt.js'
+export type { MeltEvents } from './melt.js'
+export type { KeyMode, MeltBackend, MeltConfig, MeltGLOptions, MeltSourceInput, SimulationSettings } from './options.js'
+export type { MeltRenderer } from './renderer.js'
+
+export type { Material, MaterialInput, MaterialName, LayerInput, SimulationOptions, GroundMode } from '@meltgl/displacement-engine'
+export { MATERIALS, MATERIAL_RANGES, DEFAULT_SIMULATION_OPTIONS, SIMULATION_RANGES, resolveMaterial } from '@meltgl/displacement-engine'
+export type { MeltState } from '@meltgl/transition-controller'
+export type { FilterDefinition } from '@meltgl/filter-system'
+export { blur, chromaticAberration, threshold, tint } from '@meltgl/filter-system'
+export { ImageSource, VideoSource, estimateKey } from '@meltgl/source-graphics'
+export type { GraphicsSource, KeyColour } from '@meltgl/source-graphics'
+export { MeltError } from '@meltgl/common'

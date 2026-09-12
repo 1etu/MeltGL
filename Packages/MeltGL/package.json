@@ -1,0 +1,59 @@
+{
+  "name": "meltgl",
+  "version": "0.1.0",
+  "description": "Melts images and video in the browser with a free surface fluid simulation",
+  "keywords": [
+    "melt",
+    "webgl",
+    "webgl2",
+    "fluid",
+    "simulation",
+    "animation",
+    "svg-filter",
+    "canvas",
+    "image",
+    "video"
+  ],
+  "homepage": "https://github.com/1etu/meltgl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1etu/meltgl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/1etu/meltgl/issues"
+  },
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "rimraf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@meltgl/animation-clock": "workspace:*",
+    "@meltgl/common": "workspace:*",
+    "@meltgl/displacement-engine": "workspace:*",
+    "@meltgl/element-host": "workspace:*",
+    "@meltgl/filter-system": "workspace:*",
+    "@meltgl/render-pipeline": "workspace:*",
+    "@meltgl/render-surface": "workspace:*",
+    "@meltgl/source-graphics": "workspace:*",
+    "@meltgl/transition-controller": "workspace:*"
+  }
+}

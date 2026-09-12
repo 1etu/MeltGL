@@ -1,0 +1,9 @@
+node_modules/
+dist/
+Applications/*/dist/
+.turbo/
+*.tsbuildinfo
+.DS_Store
+.claude/settings.local.json
+Tests/Visual/snapshots/*.actual.png
+Website/index.artifact.html
