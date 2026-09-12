@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meltgl experiments</title>
+<meta name="description" content="The standard test cases used while building the MeltGL solver, each running live in the browser.">
+<style>
+body {
+  font: 13px/1.5 Helvetica, Arial, sans-serif;
+  color: #000;
+  background: #fff;
+  margin: 0;
+  padding: 24px 20px 60px;
+}
+#page {
+  max-width: 880px;
+  margin: 0 auto;
+}
+h1 {
+  font-size: 32px;
+  font-weight: normal;
+  margin: 0 0 12px;
+}
+h2 {
+  font-size: 21px;
+  font-weight: normal;
+  margin: 34px 0 10px;
+}
+p, ul, ol, table {
+  margin: 0 0 12px;
+}
+a {
+  color: #0000ee;
+}
+a:visited {
+  color: #551a8b;
+}
+code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+}
+.caption {
+  font-size: 12px;
+  color: #333;
+}
+.nav {
+  font-size: 12px;
+  color: #555;
+  margin: 0 0 18px;
+}
+.figure {
+  margin: 0 0 44px;
+}
+.figure h2 {
+  margin: 0 0 8px;
+}
+.panels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 0 0 8px;
+}
+.panel {
+  flex: none;
+}
+.room {
+  position: relative;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%),
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+  border: 1px solid #ccc;
+}
+.stage {
+  position: absolute;
+  outline: 1px dashed #d4d4d4;
+}
+.stage img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.stage img[hidden] {
+  display: none;
+}
+.label {
+  font-size: 12px;
+  color: #333;
+  text-align: center;
+  margin: 4px 0 0;
+}
+.label b {
+  font-weight: normal;
+  font-family: "Courier New", Courier, monospace;
+  color: #555;
+}
+.controls {
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+.controls button, .controls select {
+  font: 12px Helvetica, Arial, sans-serif;
+}
+.controls input[type=range] {
+  width: 220px;
+  vertical-align: middle;
+}
+.val {
+  font-family: "Courier New", Courier, monospace;
+  color: #555;
+}
+.figure .caption {
+  max-width: 760px;
+}
+hr {
+  border: 0;
+  border-top: 1px solid #ddd;
+  margin: 34px 0 14px;
+}
+#footer {
+  font-size: 12px;
+  color: #555;
+}
+</style>
+</head>
+<body>
+<div id="page">
+
+<h1>MeltGL experiments</h1>
+
+<p class="nav"><a href="index.html">Back to the main page</a></p>
+
+<p>These are the test cases that were used while the solver was being built, in the manner of the figures in the
+papers this work leans on. Every figure here runs live in this browser. Press <i>Melt</i> under a figure to
+run it, drag the slider to scrub, or press <i>Reset</i> to put the material back. Panels within a figure share
+the same source picture and the same clock, so anything that differs between them is the parameter named in
+the caption.</p>
+
+<p id="support" class="caption"></p>
+
+<p class="caption">The material is drawn flat, in one colour, so that nothing in the picture can be mistaken for
+shading from the solver. Every highlight, rim and shadow you see is computed from the simulated surface. Figures
+are created when they scroll into view and released when they scroll out, so only the ones you are looking at
+use the GPU.</p>
+
+<div id="figures"></div>
+
+<hr>
+
+<p id="footer"><a href="index.html">MeltGL</a>. MIT license. Reports and patches are welcome on the
+<a href="https://github.com/1etu/MeltGL/issues">issue tracker</a>.</p>
+
+</div>
+
+<script type="module">
+import { createMelt } from './meltgl.js';
+
+const CLAY = '#c9b48d';
+const INK = ['#2a5fd6', '#d63a2a', '#2a9a4a', '#e0a020'];
+const LETTERS = 'abcdefghijkl';
+
+const support = document.getElementById('support');
+let probe = null;
+try {
+  probe = document.createElement('canvas').getContext('webgl2');
+} catch (error) {
+  probe = null;
+}
+const floatTargets = !!probe && !!(probe.getExtension('EXT_color_buffer_float') || probe.getExtension('EXT_color_buffer_half_float'));
+if (probe) {
+  const lose = probe.getExtension('WEBGL_lose_context');
+  if (lose) lose.loseContext();
+}
+support.textContent = probe && floatTargets
+  ? 'Running the simulation on WebGL 2.'
+  : 'This browser has no WebGL 2 with float render targets. The figures below will run the SVG filter fallback, which is a warp and will not show the effects described.';
+
+const SHAPES = {
+  slab(c) {
+    c.beginPath();
+    c.moveTo(0.12, 0.96);
+    c.lineTo(0.88, 0.96);
+    c.lineTo(0.68, 0.34);
+    c.lineTo(0.32, 0.34);
+    c.closePath();
+    c.fill();
+  },
+  disc(c) {
+    c.beginPath();
+    c.arc(0.5, 0.66, 0.3, 0, Math.PI * 2);
+    c.fill();
+  },
+  block(c) {
+    c.beginPath();
+    c.roundRect(0.25, 0.36, 0.5, 0.6, 0.03);
+    c.fill();
+  },
+  pendant(c) {
+    c.beginPath();
+    c.rect(0.08, 0.05, 0.84, 0.26);
+    c.fill();
+    for (const x of [0.2, 0.35, 0.5, 0.65, 0.8]) {
+      c.beginPath();
+      c.moveTo(x - 0.035, 0.31);
+      c.lineTo(x + 0.035, 0.31);
+      c.lineTo(x + 0.006, 0.78);
+      c.lineTo(x - 0.006, 0.78);
+      c.closePath();
+      c.fill();
+    }
+  },
+  column(c) {
+    c.beginPath();
+    c.rect(0.36, 0.06, 0.28, 0.9);
+    c.fill();
+  },
+  comb(c) {
+    c.beginPath();
+    c.rect(0.1, 0.06, 0.8, 0.2);
+    c.fill();
+    for (let i = 0; i < 9; i += 1) {
+      const x = 0.13 + i * 0.0925;
+      c.beginPath();
+      c.rect(x, 0.26, 0.035, 0.5);
+      c.fill();
+    }
+  },
+  star(c) {
+    c.beginPath();
+    for (let i = 0; i < 10; i += 1) {
+      const r = i % 2 === 0 ? 0.44 : 0.19;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const x = 0.5 + Math.cos(a) * r;
+      const y = 0.52 + Math.sin(a) * r;
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    }
+    c.closePath();
+    c.fill();
+  },
+  ring(c) {
+    c.beginPath();
+    c.arc(0.5, 0.62, 0.34, 0, Math.PI * 2);
+    c.arc(0.5, 0.62, 0.16, 0, Math.PI * 2, true);
+    c.fill('evenodd');
+  },
+  pie(c) {
+    for (let i = 0; i < 4; i += 1) {
+      c.fillStyle = INK[i];
+      c.beginPath();
+      c.moveTo(0.5, 0.66);
+      c.arc(0.5, 0.66, 0.3, (i * Math.PI) / 2, ((i + 1) * Math.PI) / 2);
+      c.closePath();
+      c.fill();
+    }
+  },
+  text(c) {
+    c.font = '900 0.34px Helvetica, Arial, sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'alphabetic';
+    const word = 'MELT';
+    const widths = [...word].map((letter) => c.measureText(letter).width);
+    const total = widths.reduce((sum, w) => sum + w, 0);
+    let x = 0.5 - total / 2;
+    [...word].forEach((letter, index) => {
+      c.fillStyle = INK[index % INK.length];
+      c.textAlign = 'left';
+      c.fillText(letter, x, 0.95);
+      x += widths[index];
+    });
+  },
+};
+
+const pictures = new Map();
+const picture = async (shape, size) => {
+  const key = shape + ':' + size;
+  if (pictures.has(key)) return pictures.get(key);
+  const scale = 2;
+  const sheet = document.createElement('canvas');
+  sheet.width = size * scale;
+  sheet.height = size * scale;
+  const c = sheet.getContext('2d');
+  c.scale(size * scale, size * scale);
+  c.fillStyle = CLAY;
+  SHAPES[shape](c);
+  const image = new Image();
+  image.src = sheet.toDataURL('image/png');
+  await image.decode();
+  pictures.set(key, image);
+  return image;
+};
+
+const rest = { side: 0.34, top: 0.06, drip: 0.04 };
+const hang = { side: 0.14, top: 0.05, drip: 0.6 };
+
+const FIGURES = [
+  {
+    id: 'slab',
+    title: 'A slab heated from above',
+    stage: 300,
+    room: rest,
+    ground: 'floor',
+    duration: 8,
+    caption: 'A truncated triangular slab of wax standing on a floor and heated from the top edge and the exposed surface, in the spirit of the first figure of Terzopoulos, Platt and Fleischer, Heating and Melting Deformable Models, 1991, which melted a block the same way. The flat top softens first and sinks, the shoulders round over, and the body slumps into a mound whose base spreads along the floor while the outline rounds under surface tension. Wax, meltRate 1, floor.',
+    panels: [{ shape: 'slab', material: 'wax' }],
+  },
+  {
+    id: 'materials',
+    title: 'One shape, six materials',
+    stage: 186,
+    room: { side: 0.24, top: 0.06, drip: 0.04 },
+    ground: 'floor',
+    duration: 8,
+    caption: 'The same disc, on the same floor, on the same clock, with nothing changed but the material preset. The presets are real ratios: kinematic viscosity spans four decades from solder to tar, and melt rate decides how long a solid core survives inside the liquid shell. (a) wax runs into a soft mound. (b) honey spreads until tension and viscosity balance. (c) chocolate takes heat slowly, so a solid core holds up its dome long after the shell has melted; scrub back to see the pale core inside. (d) tar barely moves in eight seconds, which is correct. (e) solder is nearly inviscid and pools instantly, with the strongest surface tension of the set. (f) slime sits between honey and wax with high tension, so it makes fat rounded lobes. The liquid takes the material colour in proportion to its blend field.',
+    panels: [
+      { shape: 'disc', material: 'wax', label: 'wax' },
+      { shape: 'disc', material: 'honey', label: 'honey' },
+      { shape: 'disc', material: 'chocolate', label: 'chocolate' },
+      { shape: 'disc', material: 'tar', label: 'tar' },
+      { shape: 'disc', material: 'solder', label: 'solder' },
+      { shape: 'disc', material: 'slime', label: 'slime' },
+    ],
+  },
+  {
+    id: 'viscosity',
+    title: 'Four decades of viscosity',
+    stage: 186,
+    room: { side: 0.24, top: 0.06, drip: 0.04 },
+    ground: 'floor',
+    duration: 8,
+    caption: 'The same disc of the same wax, with nothing changed but the kinematic viscosity of the liquid: 0.5, 5 and 40. The solid sits four decades above the liquid in every case and is anchored until it crosses the melt point, so the three discs start to soften at the same moment. What differs is what the liquid does once it is free. At 0.5 it runs off the body and spreads on the floor within the run; at 5 it slumps into a lower mound; at 40 it still holds most of its height at the end of the run, which is correct for a material that stiff. Below about 0.5 the run is limited by wall friction rather than by viscosity, so molten wax and solder look alike here and differ in how fast they take heat instead.',
+    panels: [
+      { shape: 'disc', material: { base: 'wax', cooling: 0, viscosity: 0.5 }, label: 'viscosity 0.5' },
+      { shape: 'disc', material: { base: 'wax', cooling: 0, viscosity: 5 }, label: 'viscosity 5' },
+      { shape: 'disc', material: { base: 'wax', cooling: 0, viscosity: 40 }, label: 'viscosity 40' },
+    ],
+  },
+  {
+    id: 'tension',
+    title: 'Surface tension and pinch off',
+    stage: 220,
+    room: { side: 0.14, top: 0.05, drip: 0.75 },
+    ground: 'open',
+    duration: 4,
+    simulation: { heatTop: 0 },
+    caption: 'A thick bar with five thin spikes hanging from it in open air, slime, with the tension field at 0.15 on the left and 0.95 on the right. The bar keeps a solid core for most of the run and stays where it is; the spikes heat through, and gravity draws the liquid down them. With little tension the liquid stretches into long threads that keep thinning as they hang. With strong tension the same liquid pulls back into fat rounded drops under the bar, because the curvature force is doing work against gravity. The force is the continuum surface force of Brackbill, Kothe and Zemach applied on the interface band, and it is the term that decides whether a melt reads as threads or as drops. The floor is open, so anything that falls leaves through the bottom.',
+    panels: [
+      { shape: 'pendant', material: { base: 'slime', tension: 0.15 }, label: 'tension 0.15' },
+      { shape: 'pendant', material: { base: 'slime', tension: 0.95 }, label: 'tension 0.95' },
+    ],
+  },
+  {
+    id: 'heat',
+    title: 'Where the heat comes from',
+    stage: 220,
+    room: rest,
+    ground: 'floor',
+    duration: 8,
+    caption: 'A thick column of wax standing on the floor, heated two ways. On the left almost all the heat enters from the top edge: the top softens first and sags over a core that is still solid, so the column shortens from above while its base stays crisp. On the right heat is delivered uniformly through the core and none at the top: the whole column crosses the melt point at about the same time and slumps as one body, widening from the base up. Options heatTop, coreHeat and surfaceHeat.',
+    panels: [
+      { shape: 'column', material: 'wax', simulation: { heatTop: 3, coreHeat: 0.02, surfaceHeat: 0.35 }, label: 'from the top' },
+      { shape: 'column', material: 'wax', simulation: { heatTop: 0, coreHeat: 1.2, surfaceHeat: 0 }, label: 'uniform' },
+    ],
+  },
+  {
+    id: 'thin',
+    title: 'Thin features go first',
+    stage: 220,
+    room: hang,
+    ground: 'floor',
+    duration: 6,
+    simulation: { heatTop: 0 },
+    caption: 'A comb and a star, both wax, both heated only through their exposed surface. Heat reaches the core of a thin part from both faces long before it reaches the core of a thick one, so the teeth of the comb heat through and run while the spine is still solid and holds its place, and the points of the star droop while its body is still rigid. High curvature is also where surface tension acts most strongly, so the tips round as soon as they are wet. This is the non uniform onset that separates a melt from a wipe: edges, thin parts and corners have to go first, and here they do so because of the heat model rather than because a mask was painted.',
+    panels: [
+      { shape: 'comb', material: 'wax', label: 'comb' },
+      { shape: 'star', material: 'wax', label: 'star' },
+    ],
+  },
+  {
+    id: 'topology',
+    title: 'A hole closing',
+    stage: 260,
+    room: rest,
+    ground: 'floor',
+    duration: 9,
+    caption: 'A ring of honey on the floor. As the ring slumps, the upper arc sags into the hole, the hole shrinks, and the two inner surfaces meet and merge. A mesh based surface cannot do this without special handling. Here the outline is a level set, so a change of topology costs nothing: the signed distance field simply stops having a negative region in the middle. Sussman, Smereka and Osher, 1994, with the Russo and Smereka subcell fix so the thin upper arc does not erode before it has a chance to sag.',
+    panels: [{ shape: 'ring', material: 'honey' }],
+  },
+  {
+    id: 'picture',
+    title: 'The picture rides the material',
+    stage: 300,
+    room: { side: 0.2, top: 0.06, drip: 0.04 },
+    ground: 'floor',
+    duration: 10,
+    caption: 'A disc painted in four quadrants, in a material with almost no blend so the picture keeps its colour. Watch the two straight boundaries between the colours as the disc slumps. They bend and stretch with the material but never blur or bleed into each other, because the picture is not advected. Every cell carries a reference map, the material coordinate it started from, and the picture is sampled through that map at shading time. The map is what moves; the image is read once, at full resolution, wherever the material has ended up.',
+    panels: [{ shape: 'pie', material: { base: 'wax', viscosity: 0.3, cooling: 0, blend: 0.05 } }],
+  },
+];
+
+const container = document.getElementById('figures');
+const figures = [];
+
+const build = (figure, index) => {
+  const element = document.createElement('div');
+  element.className = 'figure';
+  element.id = 'figure-' + figure.id;
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'Figure ' + (index + 1) + '. ' + figure.title;
+  element.appendChild(heading);
+
+  const panels = document.createElement('div');
+  panels.className = 'panels';
+  const { stage: size, room } = figure;
+  const side = Math.round(size * room.side);
+  const top = Math.round(size * room.top);
+  const bottom = Math.round(size * room.drip);
+
+  const state = { figure, element, panels: [], melts: [], wanted: false, creating: null };
+
+  figure.panels.forEach((panel, panelIndex) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'panel';
+    const roomBox = document.createElement('div');
+    roomBox.className = 'room';
+    roomBox.style.width = size + side * 2 + 'px';
+    roomBox.style.height = size + top + bottom + 'px';
+    const stage = document.createElement('div');
+    stage.className = 'stage';
+    stage.style.left = side + 'px';
+    stage.style.top = top + 'px';
+    stage.style.width = size + 'px';
+    stage.style.height = size + 'px';
+    const placeholder = document.createElement('img');
+    placeholder.alt = '';
+    stage.appendChild(placeholder);
+    roomBox.appendChild(stage);
+    wrap.appendChild(roomBox);
+    if (figure.panels.length > 1) {
+      const label = document.createElement('p');
+      label.className = 'label';
+      label.innerHTML = '(' + LETTERS[panelIndex] + ') <b>' + (panel.label ?? '') + '</b>';
+      wrap.appendChild(label);
+    }
+    panels.appendChild(wrap);
+    state.panels.push({ panel, stage, placeholder });
+    picture(panel.shape, size).then((image) => { placeholder.src = image.src; });
+  });
+  element.appendChild(panels);
+
+  const controls = document.createElement('div');
+  controls.className = 'controls';
+  const play = document.createElement('button');
+  play.textContent = 'Melt';
+  const reset = document.createElement('button');
+  reset.textContent = 'Reset';
+  const range = document.createElement('input');
+  range.type = 'range';
+  range.min = '0';
+  range.max = '1000';
+  range.value = '0';
+  const value = document.createElement('span');
+  value.className = 'val';
+  value.textContent = '0.00';
+  controls.append(play, ' ', reset, ' ', range, ' ', value);
+  element.appendChild(controls);
+
+  const caption = document.createElement('p');
+  caption.className = 'caption';
+  caption.textContent = figure.caption;
+  element.appendChild(caption);
+
+  container.appendChild(element);
+
+  const show = (progress) => {
+    range.value = String(Math.round(progress * 1000));
+    value.textContent = progress.toFixed(2);
+  };
+
+  const create = async () => {
+    if (state.melts.length > 0 || state.creating) return state.creating;
+    state.creating = (async () => {
+      const made = [];
+      for (const entry of state.panels) {
+        const image = await picture(entry.panel.shape, size);
+        const melt = await createMelt({
+          target: entry.stage,
+          source: image,
+          material: entry.panel.material,
+          duration: figure.duration,
+          key: 'none',
+          maxPixelRatio: 1.5,
+          simulation: {
+            ground: figure.ground,
+            dripRoom: room.drip,
+            topRoom: room.top,
+            sideRoom: room.side,
+            seed: figure.seed ?? 11,
+            ...(figure.simulation ?? {}),
+            ...(entry.panel.simulation ?? {}),
+          },
+        });
+        entry.placeholder.hidden = true;
+        made.push(melt);
+      }
+      state.melts = made;
+      made[0].on('progress', show);
+      show(0);
+      state.creating = null;
+      if (!state.wanted) destroy();
+    })();
+    return state.creating;
+  };
+
+  const destroy = () => {
+    if (state.creating) return;
+    for (const melt of state.melts) melt.dispose();
+    state.melts = [];
+    for (const entry of state.panels) entry.placeholder.hidden = false;
+    show(0);
+  };
+
+  play.addEventListener('click', async () => {
+    state.wanted = true;
+    await create();
+    for (const melt of state.melts) {
+      if (melt.progress >= 0.999) melt.reset();
+      melt.play();
+    }
+  });
+  reset.addEventListener('click', () => {
+    for (const melt of state.melts) melt.reset();
+    show(0);
+  });
+  range.addEventListener('input', async () => {
+    state.wanted = true;
+    await create();
+    const progress = Number(range.value) / 1000;
+    for (const melt of state.melts) melt.seek(progress);
+    value.textContent = progress.toFixed(2);
+  });
+
+  state.create = create;
+  state.destroy = destroy;
+  figures.push(state);
+  return state;
+};
+
+FIGURES.forEach(build);
+
+const observer = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
+    const state = figures.find((candidate) => candidate.element === entry.target);
+    if (!state) continue;
+    state.wanted = entry.isIntersecting;
+    if (entry.isIntersecting) create(state);
+    else state.destroy();
+  }
+}, { rootMargin: '240px 0px' });
+
+const create = (state) => { state.create(); };
+
+for (const state of figures) observer.observe(state.element);
+
+window.__figures = figures;
+</script>
+
+</body>
+</html>

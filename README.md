@@ -19,7 +19,10 @@ the silhouette never changes and nothing ever really drips. Here the silhouette 
 solving for, which is why drops swell, neck, and let go on their own.
 
 There is a live demo at [1etu.github.io/MeltGL](https://1etu.github.io/MeltGL/). Drop a picture or a video
-of your own on the box and pull the sliders around.
+of your own on the box and pull the sliders around. The [experiments page](https://1etu.github.io/MeltGL/experiments.html)
+has the test cases used while building the solver, one phenomenon per figure: a slab heated from above, six
+materials on one shape, four decades of viscosity, threads against drops, where the heat comes from, thin
+features going first, a hole closing, and the picture riding the material.
 
 ## The melt
 
